@@ -1,0 +1,1735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10,000 Hours Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #1a1a1a;
+            --bg-tertiary: #2a2a2a;
+            --accent: #00ff88;
+            --accent-secondary: #ff6b6b; /* For destructive actions or alerts */
+            --text-primary: #ffffff;
+            --text-secondary: #cccccc;
+            --text-muted: #888888;
+            --border: #333333;
+            --shadow: rgba(0, 255, 136, 0.1);
+            --shadow-error: rgba(255, 107, 107, 0.2);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, var(--accent), #00ccff);
+            -webkit-background-clip: text;
+            -moz-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            -moz-text-fill-color: transparent;
+            text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+            justify-content: center; /* Center buttons */
+        }
+
+        .btn {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .btn:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px var(--shadow);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: var(--bg-tertiary);
+            border-color: var(--border);
+            transform: none;
+            box-shadow: none;
+        }
+
+
+        .btn-primary {
+            background: linear-gradient(45deg, var(--accent), #00ccff);
+            border: none;
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(0, 255, 136, 0.3);
+        }
+        
+        .btn-danger {
+            background: var(--accent-secondary);
+            border-color: var(--accent-secondary);
+            color: var(--text-primary);
+        }
+
+        .btn-danger:hover {
+            background: #e05252;
+            border-color: #e05252;
+            box-shadow: 0 8px 25px var(--shadow-error);
+        }
+
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease-out;
+            overflow-y: auto; /* Allow scrolling if content overflows */
+            padding: 1rem; /* Padding for smaller screens */
+        }
+
+        .modal-content {
+            position: relative; /* Changed from absolute for better centering with flex */
+            margin: 5vh auto; /* Auto margins for horizontal centering, 5vh from top */
+            background: var(--bg-secondary);
+            padding: 2rem;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            max-width: 500px;
+            width: 100%; /* Responsive width */
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: fadeInScaleModal 0.4s ease-out;
+        }
+        
+        /* Centering modal content for when it's displayed */
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+
+        .modal h2 {
+            margin-bottom: 1.5rem;
+            color: var(--accent);
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--shadow);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .skill-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 1.5rem; /* Adjusted padding */
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            animation: fadeInScale 0.6s ease-out;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .skill-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent);
+            box-shadow: 0 15px 40px var(--shadow);
+        }
+
+        .skill-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px; /* Increased height */
+            background: linear-gradient(90deg, var(--accent), #00ccff);
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            transform: scaleX(0);
+            transform-origin: left;
+        }
+
+        .skill-card:hover::before {
+            opacity: 1;
+            transform: scaleX(1);
+        }
+
+        .skill-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem; /* Adjusted margin */
+        }
+
+        .skill-name {
+            font-size: 1.4rem; /* Adjusted size */
+            font-weight: 700;
+            color: var(--text-primary);
+            word-break: break-word; /* Prevent overflow */
+        }
+
+        .skill-hours {
+            background: var(--bg-tertiary);
+            padding: 0.4rem 0.8rem; /* Adjusted padding */
+            border-radius: 20px;
+            font-weight: 600;
+            color: var(--accent);
+            font-size: 0.9rem; /* Adjusted size */
+            white-space: nowrap;
+        }
+
+        .progress-container {
+            margin-bottom: 1rem; /* Adjusted margin */
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 16px; /* Increased height */
+            background: var(--bg-tertiary);
+            border-radius: 8px; /* Adjusted radius */
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), #00ccff);
+            border-radius: 8px;
+            transition: width 0.8s cubic-bezier(0.25, 0.1, 0.25, 1); /* Smoother transition */
+            position: relative;
+        }
+
+        .progress-fill::after { /* Shimmer effect */
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            animation: shimmer 2.5s infinite linear;
+        }
+
+        .milestones-container { /* For positioning milestones on the progress bar */
+            position: relative;
+            height: 16px; /* Same as progress bar */
+            margin-top: -16px; /* Overlay on progress bar */
+        }
+        
+        .milestone-marker {
+            position: absolute;
+            width: 3px;
+            height: 100%;
+            background-color: rgba(255,255,255,0.3);
+            top: 0;
+            transform: translateX(-50%);
+            z-index: 1;
+        }
+        .milestone-marker.achieved {
+            background-color: var(--text-primary); /* Make achieved milestones more visible */
+            box-shadow: 0 0 5px var(--text-primary);
+        }
+
+
+        .milestones-labels { /* Text labels below progress bar */
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            padding: 0 5px; /* Padding to align with progress bar ends */
+        }
+
+        .milestone-label {
+            position: relative;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            cursor: default;
+        }
+
+        .milestone-label.achieved {
+            background: var(--accent);
+            color: #000;
+            font-weight: 600;
+            box-shadow: 0 2px 5px var(--shadow);
+        }
+
+        .skill-controls {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+            margin-top: auto; /* Push controls to bottom if card grows */
+        }
+
+        .skill-controls .btn {
+            padding: 0.5rem 0.8rem; /* Adjusted padding */
+            font-size: 0.8rem;
+            flex-grow: 1; /* Allow buttons to grow */
+        }
+
+        .timer-display { /* For stopwatch per skill */
+            background: var(--bg-tertiary);
+            padding: 0.5rem;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 1rem;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .journal-section {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+        .journal-section h4 {
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .journal-entry {
+            background: var(--bg-tertiary);
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--accent); /* Emphasized border */
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .journal-entry:hover {
+            background: #303030; /* Slightly lighter on hover */
+            transform: translateX(3px);
+        }
+
+        .journal-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        .journal-meta .date {
+            font-weight: 500;
+        }
+        .journal-meta .hours-at {
+            font-style: italic;
+        }
+
+        .journal-content {
+            color: var(--text-secondary);
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+        .journal-actions {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            display: flex;
+            gap: 0.3rem;
+        }
+        .journal-actions .btn-icon {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0.3rem;
+            font-size: 0.9rem;
+            border-radius: 50%;
+        }
+        .journal-actions .btn-icon:hover {
+            color: var(--accent);
+            background-color: var(--bg-primary);
+        }
+
+
+        .pomodoro-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+        }
+        .pomodoro-section h2 { color: var(--accent); margin-bottom: 1rem;}
+
+
+        .pomodoro-timer {
+            font-size: 4rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin: 1rem 0;
+            font-family: 'Monaco', 'Consolas', monospace;
+        }
+
+        .pomodoro-controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap; /* Allow wrapping on small screens */
+        }
+        .pomodoro-controls .btn, .pomodoro-controls select {
+             flex-grow: 1; /* Make buttons/select take available space */
+             min-width: 120px; /* Minimum width for buttons */
+        }
+        .pomodoro-controls select { /* Style select like a button */
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23cccccc' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.7rem center;
+            background-size: 1em;
+        }
+
+
+        .session-counter {
+            background: var(--bg-tertiary);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            display: inline-block; /* To fit content */
+            color: var(--text-secondary);
+        }
+
+        .achievements-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.8s ease-out 0.6s both;
+        }
+        .achievements-section .achievements-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            margin-bottom: 1rem;
+        }
+        .achievements-section .achievements-header h2 {
+            color: var(--accent); 
+            margin-bottom: 0; /* Remove default margin from h2 */
+        }
+        .achievements-section .achievements-header .toggle-icon {
+            font-size: 1.5rem;
+            color: var(--accent);
+            transition: transform 0.3s ease;
+        }
+         .achievements-section .achievements-header .toggle-icon.collapsed {
+            transform: rotate(-90deg);
+        }
+
+
+        .achievements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem; /* Increased gap */
+            margin-top: 1rem;
+            max-height: 1000px; /* Allow scroll if very many achievements */
+            overflow-y: auto;
+            transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out, visibility 0.5s ease-in-out;
+            opacity: 1;
+            visibility: visible;
+        }
+        .achievements-grid.collapsed {
+            max-height: 0;
+            opacity: 0;
+            visibility: hidden;
+            margin-top: 0; /* Remove margin when collapsed */
+            overflow: hidden; /* Hide content completely */
+        }
+
+
+        .achievement-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            opacity: 0.7; /* Default for locked */
+        }
+
+        .achievement-card.unlocked {
+            opacity: 1;
+            border-color: var(--accent);
+            background: linear-gradient(135deg, var(--bg-tertiary), rgba(0, 255, 136, 0.15)); /* Subtle gradient */
+            transform: scale(1.03); /* Slightly larger */
+            box-shadow: 0 8px 25px var(--shadow);
+        }
+
+        .achievement-card.unlocked::before { /* Animated border for unlocked */
+            content: '';
+            position: absolute;
+            top: -2px; left: -2px; right: -2px; bottom: -2px;
+            background: linear-gradient(45deg, var(--accent), #00ccff, var(--accent), #00ccff);
+            background-size: 400% 400%;
+            border-radius: 14px; /* Slightly larger than card's radius */
+            z-index: -1;
+            animation: rotateGradient 4s linear infinite;
+        }
+
+        .achievement-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        .achievement-card.unlocked .achievement-icon {
+            animation: bounce 0.8s ease-out; /* Smoother bounce */
+            color: var(--accent);
+        }
+
+
+        .achievement-title {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+        .achievement-card.unlocked .achievement-title {
+            color: var(--accent);
+        }
+
+        .achievement-description {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            min-height: 40px; /* Ensure consistent height */
+        }
+        .achievement-card.unlocked .achievement-description {
+             color: var(--text-secondary);
+        }
+
+        .achievement-progress {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            background: var(--bg-primary);
+            padding: 0.25rem 0.5rem;
+            border-radius: 8px;
+            margin-top: 0.5rem;
+            display: inline-block;
+        }
+        .achievement-card.unlocked .achievement-progress {
+            color: var(--accent);
+            font-weight: 600;
+            background: var(--bg-tertiary);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, var(--accent), #00ccff);
+            color: #000;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            z-index: 2000;
+            transform: translateX(calc(100% + 30px)); /* Start off-screen */
+            transition: transform 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+            box-shadow: 0 8px 25px rgba(0, 255, 136, 0.3);
+            display: flex;
+            align-items: center;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification-icon {
+            font-size: 1.5rem;
+            margin-right: 0.75rem; /* Increased margin */
+        }
+
+        .milestone-celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1500;
+            overflow: hidden; /* Prevent scrollbars from confetti */
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            /* background: var(--accent); Default, will be overridden by JS */
+            opacity: 0; /* Start hidden */
+            animation: confetti-fall 3s linear forwards;
+        }
+        /* Specific confetti color classes .c2, .c3, .c4 are no longer strictly needed if JS sets color directly */
+        /* However, they don't hurt to keep if a different approach is taken later */
+        .confetti.c2 { background: #00ccff; }
+        .confetti.c3 { background: #ff6b6b; }
+        .confetti.c4 { background: #ffd93d; }
+
+
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem; /* Increased gap */
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.8s ease-out 0.1s both; /* Earlier animation */
+        }
+
+        .stat-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px); /* Slightly more lift */
+            border-color: var(--accent);
+            box-shadow: 0 5px 15px var(--shadow); /* Softer shadow */
+        }
+
+        .stat-number {
+            font-size: 2.2rem; /* Slightly larger */
+            font-weight: 700;
+            color: var(--accent);
+            display: block;
+            line-height: 1.2; /* Adjust line height */
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+
+        /* Animations */
+        @keyframes rotateGradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0) scale(1); }
+            40% { transform: translateY(-15px) scale(1.1); } /* More bounce */
+            60% { transform: translateY(-7px) scale(1.05); }
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-10vh) translateX(0) rotate(0deg) scale(0.5);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(110vh) translateX(calc(var(--random-x) * 150px)) rotate(720deg) scale(1);
+                opacity: 0;
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes fadeInScaleModal {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-150%) skewX(-30deg); } /* Enhanced shimmer */
+            100% { transform: translateX(150%) skewX(-30deg); }
+        }
+
+        @keyframes pulse { /* For running timers */
+            0%, 100% { opacity: 1; box-shadow: 0 0 5px var(--accent); }
+            50% { opacity: 0.8; box-shadow: 0 0 15px var(--accent); }
+        }
+        .timer-display.running, .pomodoro-timer.running {
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+
+
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .header h1 { font-size: 2.2rem; }
+            .skills-grid { grid-template-columns: 1fr; }
+            .controls { justify-content: center; }
+            .pomodoro-timer { font-size: 3rem; }
+            .stat-card { padding: 1rem; }
+            .stat-number { font-size: 1.8rem; }
+            .skill-card { padding: 1rem; }
+            .skill-name { font-size: 1.2rem; }
+            .skill-hours { font-size: 0.8rem; }
+            .modal-content { padding: 1.5rem; margin: 2vh auto; }
+        }
+        @media (max-width: 480px) {
+            .pomodoro-controls .btn, .pomodoro-controls select {
+                min-width: 100px; /* Further reduce min-width */
+                padding: 0.6rem 1rem;
+            }
+            .skill-controls .btn {
+                font-size: 0.75rem;
+                padding: 0.4rem 0.6rem;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>10,000 Hours</h1>
+            <p>Master your skills, one hour at a time.</p>
+        </header>
+
+        <div class="stats-overview" id="statsOverview">
+            </div>
+
+        <div class="achievements-section">
+            <div class="achievements-header" onclick="toggleAchievements()">
+                <h2>🏆 Achievements</h2>
+                <span class="toggle-icon" id="achievementsToggleIcon">▼</span>
+            </div>
+            <div class="achievements-grid collapsed" id="achievementsGrid">
+                </div>
+        </div>
+
+        <div class="pomodoro-section">
+            <h2>🍅 Pomodoro Timer</h2>
+            <div class="pomodoro-timer" id="pomodoroDisplay">25:00</div>
+            <div class="pomodoro-controls">
+                <button class="btn" id="pomodoroStartBtn" onclick="startPomodoro()">Start</button>
+                <button class="btn" id="pomodoroPauseBtn" onclick="pausePomodoro()">Pause</button>
+                <button class="btn" id="pomodoroResetBtn" onclick="resetPomodoro()">Reset</button>
+                <select id="pomodoroType" class="btn" onchange="handlePomodoroTypeChange()">
+                    <option value="25">Work (25min)</option>
+                    <option value="5">Short Break (5min)</option>
+                    <option value="15">Long Break (15min)</option>
+                </select>
+            </div>
+            <div class="session-counter">
+                Sessions completed: <span id="pomodoroSessionCount">0</span>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" onclick="openAddSkillModal()">+ Add New Skill</button>
+            <button class="btn" onclick="exportData()">Export Data</button>
+            <label class="btn" for="importFile">Import Data</label> <input type="file" id="importFile" onchange="importData(event)" accept=".json" style="display: none;">
+        </div>
+
+        <div class="skills-grid" id="skillsGrid">
+            </div>
+    </div>
+
+    <div class="notification" id="notification">
+        <span class="notification-icon">🎉</span>
+        <span id="notificationText"></span>
+    </div>
+
+    <div class="milestone-celebration" id="milestoneCelebration"></div>
+
+    <div class="modal" id="skillModal">
+        <div class="modal-content">
+            <h2 id="skillModalTitle">Add New Skill</h2>
+            <input type="hidden" id="editingSkillId">
+            <div class="form-group">
+                <label for="skillNameInput">Skill Name</label>
+                <input type="text" id="skillNameInput" placeholder="e.g., Guitar, Programming">
+            </div>
+            <div class="form-group">
+                <label for="targetHoursInput">Target Hours</label>
+                <select id="targetHoursInput">
+                    <option value="100">100 Hours (Foundation)</option>
+                    <option value="250">250 Hours (Competence)</option>
+                    <option value="500">500 Hours (Proficiency)</option>
+                    <option value="1000">1000 Hours (Advanced)</option>
+                    <option value="2500">2500 Hours (Expert)</option>
+                    <option value="5000">5000 Hours (Mastery)</option>
+                    <option value="10000" selected>10000 Hours (Grandmaster)</option>
+                </select>
+            </div>
+             <div class="form-group" id="currentHoursEditGroup" style="display:none;">
+                <label for="currentHoursInput">Current Hours</label>
+                <input type="number" id="currentHoursInput" step="0.1" min="0">
+            </div>
+            <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+                <button class="btn" onclick="closeModal('skillModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveSkill()">Save Skill</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="journalModal">
+        <div class="modal-content">
+            <h2 id="journalModalTitle">Add Journal Entry</h2>
+            <input type="hidden" id="journalSkillId">
+            <input type="hidden" id="editingJournalId">
+            <div class="form-group">
+                <label for="journalContentInput">Entry</label>
+                <textarea id="journalContentInput" placeholder="What did you learn or practice today?"></textarea>
+            </div>
+            <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+                <button class="btn" onclick="closeModal('journalModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveJournalEntry()">Save Entry</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA STORAGE & MANAGEMENT ---
+        const STORAGE_KEY = 'skillTrackerData_v2';
+        let skillsData = {}; // { skillId: { id, name, targetHours, currentHours, createdAt, journal: [], timerState: {startTime, elapsedMs, intervalId, running}, lastUpdated } }
+        let userStats = {
+            totalHours: 0,
+            achievementsUnlocked: [],
+            lastActiveDate: null, // YYYY-MM-DD
+            currentStreak: 0,
+            longestStreak: 0,
+            pomodoroSessions: 0,
+            lastSessionLoggedTime: null // For marathon session tracking
+        };
+        
+        // For active timers that don't need to be in localStorage directly
+        let activeTimers = {}; // { skillId: intervalId }
+        let pomodoroInterval = null;
+        let pomodoroTimeLeft = 25 * 60;
+        let pomodoroRunning = false;
+        let currentPomodoroTypeDuration = 25 * 60;
+
+
+        // --- PRESETS & CONFIG ---
+        const MILESTONE_PRESETS = [0.01, 0.1, 0.25, 0.5, 0.75, 1]; // Percentage based milestones
+        const TARGET_HOUR_OPTIONS = [100, 250, 500, 1000, 2500, 5000, 10000];
+
+        const ACHIEVEMENTS = [
+            { id: 'first_hour', icon: '🌱', title: 'First Steps', description: 'Log your first hour of practice.', condition: () => userStats.totalHours >= 1 },
+            { id: 'ten_hours', icon: '🚀', title: 'Getting Started', description: 'Reach 10 total hours of practice.', condition: () => userStats.totalHours >= 10 },
+            { id: 'fifty_hours', icon: '🛠️', title: 'Builder', description: 'Log 50 total hours.', condition: () => userStats.totalHours >= 50 },
+            { id: 'hundred_hours', icon: '💯', title: 'Century Mark', description: 'Achieve 100 total hours.', condition: () => userStats.totalHours >= 100 },
+            { id: 'five_hundred_hours', icon: '🎯', title: 'Dedicated', description: 'Reach 500 total hours.', condition: () => userStats.totalHours >= 500 },
+            { id: 'thousand_hours', icon: '🌟', title: 'Thousand Strong', description: 'Reach 1,000 total hours.', condition: () => userStats.totalHours >= 1000 },
+            
+            { id: 'first_skill', icon: '💡', title: 'Skill Initiated', description: 'Add your first skill.', condition: () => Object.keys(skillsData).length >= 1 },
+            { id: 'multi_skill', icon: '🎨', title: 'Polymath', description: 'Track 3+ active skills.', condition: () => Object.keys(skillsData).length >= 3 },
+            { id: 'skill_complete', icon: '👑', title: 'Skill Conquered', description: 'Complete the target hours for any skill.', condition: () => Object.values(skillsData).some(s => s.currentHours >= s.targetHours) },
+            
+            { id: 'week_streak', icon: '🔥', title: 'Weekly Warrior', description: 'Practice 7 days in a row.', condition: () => userStats.currentStreak >= 7 },
+            { id: 'month_streak', icon: '📅', title: 'Monthly Maintainer', description: 'Practice 30 days in a row.', condition: () => userStats.currentStreak >= 30 },
+            { id: 'hundred_day_streak', icon: '💎', title: 'Diamond Habit', description: 'Practice 100 days in a row.', condition: () => userStats.currentStreak >= 100 },
+
+            { id: 'first_journal', icon: '✍️', title: 'First Reflection', description: 'Write your first journal entry.', condition: () => getTotalJournalEntries() >= 1 },
+            { id: 'ten_journals', icon: '📝', title: 'Chronicler', description: 'Write 10 journal entries.', condition: () => getTotalJournalEntries() >= 10 },
+            { id: 'fifty_journals', icon: '📖', title: 'Storyteller', description: 'Write 50 journal entries.', condition: () => getTotalJournalEntries() >= 50 },
+
+            { id: 'pomodoro_novice', icon: '🍅', title: 'Pomodoro Novice', description: 'Complete 10 Pomodoro work sessions.', condition: () => userStats.pomodoroSessions >= 10 },
+            { id: 'pomodoro_pro', icon: '🧘', title: 'Focus Pro', description: 'Complete 50 Pomodoro work sessions.', condition: () => userStats.pomodoroSessions >= 50 },
+            { id: 'pomodoro_master', icon: '🧠', title: 'Focus Master', description: 'Complete 100 Pomodoro work sessions.', condition: () => userStats.pomodoroSessions >= 100 },
+            
+            { id: 'early_bird', icon: '🌅', title: 'Early Bird', description: 'Log practice time before 7 AM.', conditionType: 'event', eventName: 'logTimeEarly' },
+            { id: 'night_owl', icon: '🦉', title: 'Night Owl', description: 'Log practice time after 10 PM.', conditionType: 'event', eventName: 'logTimeLate' },
+            { id: 'marathon_session', icon: '🏃‍♀️', title: 'Marathon Session', description: 'Log over 2 hours in a single session for a skill.', conditionType: 'event', eventName: 'logMarathonSession'}
+        ];
+        let eventBasedAchievementState = { logTimeEarly: false, logTimeLate: false, logMarathonSession: false };
+
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            renderAll();
+            // Add change listener to pomodoro type to reset timer display immediately
+            document.getElementById('pomodoroType').addEventListener('change', handlePomodoroTypeChange);
+            // Set initial state of achievements section (e.g., collapsed by default)
+            const achievementsGrid = document.getElementById('achievementsGrid');
+            const achievementsToggleIcon = document.getElementById('achievementsToggleIcon');
+            if (achievementsGrid.classList.contains('collapsed')) {
+                 achievementsToggleIcon.classList.add('collapsed');
+                 achievementsToggleIcon.textContent = '▶'; // Point right when collapsed
+            } else {
+                 achievementsToggleIcon.classList.remove('collapsed');
+                 achievementsToggleIcon.textContent = '▼'; // Point down when expanded
+            }
+        });
+
+        function renderAll() {
+            renderSkills();
+            updateStatsDisplay();
+            renderAchievements();
+            updatePomodoroDisplay(); // Ensure Pomodoro display is current
+            document.getElementById('pomodoroSessionCount').textContent = userStats.pomodoroSessions;
+        }
+
+        // --- LOCALSTORAGE FUNCTIONS ---
+        function saveData() {
+            const dataToSave = {
+                skillsData,
+                userStats,
+                eventBasedAchievementState // Save event achievement states
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+        }
+
+        function loadData() {
+            const data = localStorage.getItem(STORAGE_KEY);
+            if (data) {
+                const parsedData = JSON.parse(data);
+                skillsData = parsedData.skillsData || {};
+                userStats = parsedData.userStats || userStats; // Ensure default if not present
+                eventBasedAchievementState = parsedData.eventBasedAchievementState || eventBasedAchievementState;
+
+                // Re-initialize non-serializable parts like interval IDs or ensure timers are not auto-starting
+                Object.values(skillsData).forEach(skill => {
+                    if (skill.timerState) { // Ensure timerState exists
+                        skill.timerState.intervalId = null; // Don't auto-start timers
+                        skill.timerState.running = false;
+                    } else { // Initialize if missing from older data
+                         skill.timerState = { startTime: null, elapsedMs: 0, intervalId: null, running: false };
+                    }
+                });
+            }
+             // Ensure default values for userStats if loading older data or first time
+            userStats.totalHours = userStats.totalHours || 0;
+            userStats.achievementsUnlocked = userStats.achievementsUnlocked || [];
+            userStats.lastActiveDate = userStats.lastActiveDate || null;
+            userStats.currentStreak = userStats.currentStreak || 0;
+            userStats.longestStreak = userStats.longestStreak || 0;
+            userStats.pomodoroSessions = userStats.pomodoroSessions || 0;
+
+            // Initialize pomodoro timer based on last selected type (or default)
+            currentPomodoroTypeDuration = parseInt(document.getElementById('pomodoroType').value) * 60;
+            pomodoroTimeLeft = currentPomodoroTypeDuration;
+        }
+        
+        // --- MODAL FUNCTIONS ---
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // --- SKILL MANAGEMENT ---
+        function openAddSkillModal() {
+            document.getElementById('skillModalTitle').textContent = 'Add New Skill';
+            document.getElementById('editingSkillId').value = '';
+            document.getElementById('skillNameInput').value = '';
+            document.getElementById('targetHoursInput').value = '10000';
+            document.getElementById('currentHoursInput').value = '0';
+            document.getElementById('currentHoursEditGroup').style.display = 'none'; 
+            openModal('skillModal');
+        }
+
+        function openEditSkillModal(skillId) {
+            const skill = skillsData[skillId];
+            if (!skill) return;
+            document.getElementById('skillModalTitle').textContent = 'Edit Skill';
+            document.getElementById('editingSkillId').value = skillId;
+            document.getElementById('skillNameInput').value = skill.name;
+            document.getElementById('targetHoursInput').value = skill.targetHours;
+            document.getElementById('currentHoursInput').value = skill.currentHours.toFixed(2);
+            document.getElementById('currentHoursEditGroup').style.display = 'block'; 
+            openModal('skillModal');
+        }
+        
+        function saveSkill() {
+            const skillName = document.getElementById('skillNameInput').value.trim();
+            const targetHours = parseInt(document.getElementById('targetHoursInput').value);
+            const editingSkillId = document.getElementById('editingSkillId').value;
+            let currentHours = parseFloat(document.getElementById('currentHoursInput').value) || 0;
+
+            if (!skillName || isNaN(targetHours)) {
+                showNotification("Skill name and target hours are required.", "⚠️", true);
+                return;
+            }
+            if (currentHours < 0) currentHours = 0;
+
+
+            if (editingSkillId) { 
+                const oldHours = skillsData[editingSkillId].currentHours;
+                skillsData[editingSkillId].name = skillName;
+                skillsData[editingSkillId].targetHours = targetHours;
+                skillsData[editingSkillId].currentHours = currentHours;
+                skillsData[editingSkillId].lastUpdated = Date.now();
+                const hoursDiff = currentHours - oldHours;
+                if (hoursDiff !== 0) {
+                    logTimeForStreak(hoursDiff > 0 ? Date.now() : null); 
+                }
+
+            } else { 
+                const skillId = `skill_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                skillsData[skillId] = {
+                    id: skillId,
+                    name: skillName,
+                    targetHours: targetHours,
+                    currentHours: currentHours, 
+                    createdAt: Date.now(),
+                    journal: [],
+                    timerState: { startTime: null, elapsedMs: 0, intervalId: null, running: false },
+                    lastUpdated: Date.now()
+                };
+                 if (currentHours > 0) logTimeForStreak(Date.now());
+            }
+            
+            updateUserStatsAndAchievements();
+            saveData();
+            renderAll();
+            closeModal('skillModal');
+            showNotification(editingSkillId ? "Skill updated!" : "Skill added!", "✅");
+        }
+
+        function deleteSkill(skillId) {
+            if (skillsData[skillId] && confirm(`Are you sure you want to delete the skill "${skillsData[skillId].name}"? This cannot be undone.`)) {
+                if (skillsData[skillId] && skillsData[skillId].timerState && skillsData[skillId].timerState.intervalId) {
+                    cancelAnimationFrame(skillsData[skillId].timerState.intervalId); 
+                    delete activeTimers[skillId]; 
+                }
+                delete skillsData[skillId];
+                updateUserStatsAndAchievements();
+                saveData();
+                renderAll();
+                showNotification("Skill deleted.", "🗑️");
+            }
+        }
+
+        function renderSkills() {
+            const skillsGrid = document.getElementById('skillsGrid');
+            skillsGrid.innerHTML = ''; 
+
+            if (Object.keys(skillsData).length === 0) {
+                skillsGrid.innerHTML = `<p style="text-align:center; color: var(--text-muted); grid-column: 1 / -1;">No skills added yet. Click "+ Add New Skill" to begin!</p>`;
+                return;
+            }
+
+            Object.values(skillsData).sort((a,b) => (b.lastUpdated || 0) - (a.lastUpdated || 0) ).forEach(skill => {
+                const card = document.createElement('div');
+                card.className = 'skill-card';
+                card.dataset.skillId = skill.id;
+
+                const percentage = skill.targetHours > 0 ? (skill.currentHours / skill.targetHours) * 100 : 0;
+                
+                let milestoneMarkersHTML = '';
+                const skillMilestones = MILESTONE_PRESETS.map(p => skill.targetHours * p);
+
+                skillMilestones.forEach(msHours => {
+                    if (msHours <= skill.targetHours) { 
+                        const msPercentage = (msHours / skill.targetHours) * 100;
+                        const achieved = skill.currentHours >= msHours;
+                        milestoneMarkersHTML += `<div class="milestone-marker ${achieved ? 'achieved' : ''}" style="left: ${msPercentage}%" title="${msHours.toFixed(1)} hrs"></div>`;
+                    }
+                });
+                
+                let finalLabelsHTML = `<span class="milestone-label ${skill.currentHours >= 0 ? 'achieved' : ''}">0h</span>`;
+                const uniqueMilestoneHoursForLabels = [...new Set(skillMilestones.filter(h => h > 0 && h < skill.targetHours).map(h => parseFloat(h.toFixed(0))))].sort((a,b) => a - b);
+                
+                uniqueMilestoneHoursForLabels.forEach(msLabelHour => {
+                    finalLabelsHTML += `<span class="milestone-label ${skill.currentHours >= msLabelHour ? 'achieved' : ''}">${msLabelHour}h</span>`;
+                });
+                finalLabelsHTML += `<span class="milestone-label ${skill.currentHours >= skill.targetHours ? 'achieved' : ''}">${skill.targetHours}h</span>`;
+
+
+                card.innerHTML = `
+                    <div class="skill-header">
+                        <span class="skill-name">${skill.name}</span>
+                        <span class="skill-hours">${skill.currentHours.toFixed(2)} / ${skill.targetHours} hrs</span>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${Math.min(percentage, 100)}%;"></div>
+                            <div class="milestones-container">${milestoneMarkersHTML}</div>
+                        </div>
+                        <div class="milestones-labels">${finalLabelsHTML}</div>
+                    </div>
+                    <div class="timer-display" id="timerDisplay-${skill.id}">${formatStopwatchTime(skill.timerState.elapsedMs)}</div>
+                    <div class="skill-controls">
+                        <button class="btn" id="timerBtn-${skill.id}" onclick="toggleStopwatch('${skill.id}')">
+                            ${skill.timerState.running ? 'Pause' : (skill.timerState.elapsedMs > 0 ? 'Resume' : 'Start')} Timer
+                        </button>
+                        <button class="btn" onclick="resetStopwatch('${skill.id}')" ${skill.timerState.elapsedMs === 0 && !skill.timerState.running ? 'disabled' : ''}>Reset Timer</button>
+                        <button class="btn" onclick="openEditSkillModal('${skill.id}')">Edit Skill</button>
+                        <button class="btn" onclick="openJournalModal('${skill.id}')">+ Journal</button>
+                        <button class="btn btn-danger" onclick="deleteSkill('${skill.id}')">Delete</button>
+                    </div>
+                    <div class="journal-section" id="journalFor-${skill.id}">
+                        <h4>Journal Entries</h4>
+                        <div class="journal-entries-list"></div>
+                    </div>
+                `;
+                skillsGrid.appendChild(card);
+                renderJournalEntries(skill.id);
+                updateTimerDisplay(skill.id); 
+            });
+        }
+        
+        // --- STOPWATCH / TIMER PER SKILL ---
+        function toggleStopwatch(skillId) {
+            const skill = skillsData[skillId];
+            if (!skill) return;
+
+            skill.timerState.running = !skill.timerState.running;
+            skill.lastUpdated = Date.now();
+
+            if (skill.timerState.running) { 
+                skill.timerState.startTime = Date.now();
+                if (activeTimers[skillId]) cancelAnimationFrame(activeTimers[skillId]); 
+                activeTimers[skillId] = requestAnimationFrame(() => stopwatchLoop(skillId));
+                document.getElementById(`timerBtn-${skill.id}`).textContent = 'Pause Timer';
+                document.getElementById(`timerBtn-${skill.id}`).classList.add('running'); 
+                document.querySelector(`#timerDisplay-${skill.id}`).classList.add('running');
+            } else { 
+                if (activeTimers[skillId]) { 
+                    cancelAnimationFrame(activeTimers[skillId]);
+                    delete activeTimers[skillId];
+                }
+                const elapsedSinceLastStart = skill.timerState.startTime ? (Date.now() - skill.timerState.startTime) : 0;
+                skill.timerState.elapsedMs += elapsedSinceLastStart;
+                
+                const hoursAdded = elapsedSinceLastStart / (1000 * 60 * 60);
+                if (hoursAdded > 0) { 
+                    skill.currentHours += hoursAdded;
+                    logTimeForStreak(Date.now()); 
+                    checkEventAchievementsOnTimeLog(hoursAdded);
+                }
+
+                skill.timerState.startTime = null; 
+                document.getElementById(`timerBtn-${skill.id}`).textContent = 'Resume Timer';
+                document.getElementById(`timerBtn-${skill.id}`).classList.remove('running');
+                document.querySelector(`#timerDisplay-${skill.id}`).classList.remove('running');
+            }
+            updateUserStatsAndAchievements(); 
+            saveData(); 
+            renderSkills(); 
+        }
+
+        function stopwatchLoop(skillId) {
+            const skill = skillsData[skillId];
+            if (!skill || !skill.timerState || !skill.timerState.running) {
+                if(activeTimers[skillId]) {
+                    cancelAnimationFrame(activeTimers[skillId]);
+                    delete activeTimers[skillId];
+                }
+                return;
+            }
+            updateTimerDisplay(skillId);
+            activeTimers[skillId] = requestAnimationFrame(() => stopwatchLoop(skillId));
+        }
+        
+        function updateTimerDisplay(skillId) {
+            const skill = skillsData[skillId];
+            if (!skill || !skill.timerState) return; 
+            const timerDisplayEl = document.getElementById(`timerDisplay-${skill.id}`);
+            if (!timerDisplayEl) return;
+
+            let displayTimeMs = skill.timerState.elapsedMs;
+            if (skill.timerState.running && skill.timerState.startTime) {
+                displayTimeMs += (Date.now() - skill.timerState.startTime);
+            }
+            timerDisplayEl.textContent = formatStopwatchTime(displayTimeMs);
+        }
+
+
+        function resetStopwatch(skillId) {
+            const skill = skillsData[skillId];
+            if (!skill) return;
+
+            if (skill.timerState.running) { 
+                toggleStopwatch(skillId); 
+            }
+            
+            skill.timerState.elapsedMs = 0;
+            skill.timerState.startTime = null;
+            skill.lastUpdated = Date.now();
+
+            if (activeTimers[skillId]) {
+                cancelAnimationFrame(activeTimers[skillId]);
+                delete activeTimers[skillId];
+            }
+            
+            updateTimerDisplay(skillId); 
+            saveData();
+            renderSkills(); 
+            showNotification(`Timer for ${skill.name} reset.`, "🔄");
+        }
+
+        function formatStopwatchTime(ms) {
+            let totalSeconds = Math.floor(ms / 1000);
+            let hours = Math.floor(totalSeconds / 3600);
+            totalSeconds %= 3600;
+            let minutes = Math.floor(totalSeconds / 60);
+            let seconds = totalSeconds % 60;
+            return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        // --- JOURNAL ---
+        function openJournalModal(skillId, journalId = null) {
+            const skill = skillsData[skillId];
+            if (!skill) return;
+
+            document.getElementById('journalSkillId').value = skillId;
+            const modalTitle = document.getElementById('journalModalTitle');
+            const contentInput = document.getElementById('journalContentInput');
+            const editingJournalIdInput = document.getElementById('editingJournalId');
+
+            if (journalId) { 
+                const entry = skill.journal.find(j => j.id === journalId);
+                if (!entry) return;
+                modalTitle.textContent = `Edit Journal Entry for ${skill.name}`;
+                contentInput.value = entry.content;
+                editingJournalIdInput.value = journalId;
+            } else { 
+                modalTitle.textContent = `Add Journal Entry for ${skill.name}`;
+                contentInput.value = '';
+                editingJournalIdInput.value = '';
+            }
+            openModal('journalModal');
+        }
+
+        function saveJournalEntry() {
+            const skillId = document.getElementById('journalSkillId').value;
+            const editingJournalId = document.getElementById('editingJournalId').value;
+            const content = document.getElementById('journalContentInput').value.trim();
+
+            if (!content) {
+                showNotification("Journal content cannot be empty.", "⚠️", true);
+                return;
+            }
+
+            const skill = skillsData[skillId];
+            if (!skill) return;
+
+            if (editingJournalId) { 
+                const entry = skill.journal.find(j => j.id === editingJournalId);
+                if (entry) entry.content = content;
+            } else { 
+                const newEntry = {
+                    id: `journal_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                    content: content,
+                    timestamp: Date.now(),
+                    hoursAtEntry: skill.currentHours 
+                };
+                skill.journal.push(newEntry);
+            }
+            skill.lastUpdated = Date.now();
+            
+            updateUserStatsAndAchievements(); 
+            saveData();
+            renderJournalEntries(skillId); 
+            closeModal('journalModal');
+            showNotification(editingJournalId ? "Journal entry updated!" : "Journal entry added!", "✍️");
+        }
+
+        function deleteJournalEntry(skillId, journalId) {
+            const skill = skillsData[skillId];
+            if (!skill) return;
+            if (confirm("Are you sure you want to delete this journal entry?")) {
+                skill.journal = skill.journal.filter(j => j.id !== journalId);
+                skill.lastUpdated = Date.now();
+                saveData();
+                renderJournalEntries(skillId);
+                updateUserStatsAndAchievements(); 
+                showNotification("Journal entry deleted.", "🗑️");
+            }
+        }
+
+        function renderJournalEntries(skillId) {
+            const skill = skillsData[skillId];
+            if (!skill) return;
+            const journalListContainer = document.querySelector(`#journalFor-${skillId} .journal-entries-list`);
+            if (!journalListContainer) return;
+
+            journalListContainer.innerHTML = ''; 
+            if (skill.journal.length === 0) {
+                journalListContainer.innerHTML = `<p style="color: var(--text-muted); font-style: italic;">No entries yet.</p>`;
+                return;
+            }
+
+            const sortedJournal = [...skill.journal].sort((a, b) => b.timestamp - a.timestamp);
+
+            sortedJournal.forEach(entry => {
+                const entryDiv = document.createElement('div');
+                entryDiv.className = 'journal-entry';
+                entryDiv.innerHTML = `
+                    <div class="journal-meta">
+                        <span class="date">${new Date(entry.timestamp).toLocaleDateString()}</span>
+                        <span class="hours-at">Logged at ${entry.hoursAtEntry.toFixed(1)} hrs</span>
+                    </div>
+                    <div class="journal-content">${entry.content.replace(/\n/g, '<br>')}</div>
+                    <div class="journal-actions">
+                        <button class="btn-icon" title="Edit Entry" onclick="openJournalModal('${skillId}', '${entry.id}')">✏️</button>
+                        <button class="btn-icon" title="Delete Entry" onclick="deleteJournalEntry('${skillId}', '${entry.id}')">🗑️</button>
+                    </div>
+                `;
+                journalListContainer.appendChild(entryDiv);
+            });
+        }
+        
+        // --- POMODORO TIMER ---
+        function handlePomodoroTypeChange() {
+            if (pomodoroRunning) {
+                pausePomodoro(); 
+            }
+            currentPomodoroTypeDuration = parseInt(document.getElementById('pomodoroType').value) * 60;
+            resetPomodoro(); 
+        }
+
+        function startPomodoro() {
+            if (pomodoroRunning) return;
+            pomodoroRunning = true;
+            document.getElementById('pomodoroStartBtn').disabled = true;
+            document.getElementById('pomodoroPauseBtn').disabled = false;
+            document.getElementById('pomodoroType').disabled = true; 
+            document.getElementById('pomodoroDisplay').classList.add('running');
+
+
+            pomodoroInterval = setInterval(() => {
+                pomodoroTimeLeft--;
+                updatePomodoroDisplay();
+                if (pomodoroTimeLeft <= 0) {
+                    clearInterval(pomodoroInterval);
+                    pomodoroRunning = false;
+                    document.getElementById('pomodoroStartBtn').disabled = false;
+                    document.getElementById('pomodoroPauseBtn').disabled = true;
+                    document.getElementById('pomodoroType').disabled = false;
+                    document.getElementById('pomodoroDisplay').classList.remove('running');
+
+
+                    const pomodoroType = document.getElementById('pomodoroType').value;
+                    if (pomodoroType === "25") { 
+                        userStats.pomodoroSessions++;
+                        document.getElementById('pomodoroSessionCount').textContent = userStats.pomodoroSessions;
+                        updateUserStatsAndAchievements(); 
+                        showNotification("Pomodoro work session complete!", "🍅");
+                    } else if (pomodoroType === "5") {
+                         showNotification("Short break finished!", "☕");
+                    } else if (pomodoroType === "15") {
+                         showNotification("Long break finished!", "🚶");
+                    }
+                    createConfetti(50, ['#ff6347', '#ff7f50', '#ff4500']); 
+                    
+                    pomodoroTimeLeft = currentPomodoroTypeDuration; 
+                    updatePomodoroDisplay();
+                    saveData();
+                }
+            }, 1000);
+        }
+
+        function pausePomodoro() {
+            if (!pomodoroRunning) return;
+            clearInterval(pomodoroInterval);
+            pomodoroRunning = false;
+            document.getElementById('pomodoroStartBtn').disabled = false;
+            document.getElementById('pomodoroPauseBtn').disabled = true;
+            document.getElementById('pomodoroType').disabled = false; 
+            document.getElementById('pomodoroDisplay').classList.remove('running');
+
+        }
+
+        function resetPomodoro() {
+            clearInterval(pomodoroInterval);
+            pomodoroRunning = false;
+            pomodoroTimeLeft = currentPomodoroTypeDuration; 
+            updatePomodoroDisplay();
+            document.getElementById('pomodoroStartBtn').disabled = false;
+            document.getElementById('pomodoroPauseBtn').disabled = true;
+            document.getElementById('pomodoroType').disabled = false;
+            document.getElementById('pomodoroDisplay').classList.remove('running');
+        }
+
+        function updatePomodoroDisplay() {
+            const minutes = Math.floor(pomodoroTimeLeft / 60);
+            const seconds = pomodoroTimeLeft % 60;
+            document.getElementById('pomodoroDisplay').textContent = 
+                `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+        
+        // --- USER STATS & ACHIEVEMENTS ---
+        function logTimeForStreak(timestampOfActivity) { 
+            if (!timestampOfActivity) return; 
+
+            const today = new Date(timestampOfActivity).toDateString(); 
+            
+            if (userStats.lastActiveDate !== today) {
+                const yesterday = new Date(timestampOfActivity);
+                yesterday.setDate(yesterday.getDate() - 1);
+                
+                if (userStats.lastActiveDate === yesterday.toDateString()) {
+                    userStats.currentStreak++;
+                } else {
+                    userStats.currentStreak = 1; 
+                }
+                userStats.lastActiveDate = today;
+                userStats.longestStreak = Math.max(userStats.longestStreak, userStats.currentStreak);
+            }
+        }
+
+        function checkEventAchievementsOnTimeLog(hoursAddedThisSession) {
+            const now = new Date();
+            const currentHour = now.getHours();
+
+            if (currentHour < 7) eventBasedAchievementState.logTimeEarly = true;
+            if (currentHour >= 22) eventBasedAchievementState.logTimeLate = true; 
+            if (hoursAddedThisSession >= 2) eventBasedAchievementState.logMarathonSession = true;
+            
+            checkAchievements(); 
+        }
+
+
+        function updateUserStatsAndAchievements() {
+            userStats.totalHours = Object.values(skillsData).reduce((sum, skill) => sum + skill.currentHours, 0);
+            
+            Object.values(skillsData).forEach(skill => {
+                if (skill.currentHours >= skill.targetHours) {
+                }
+            });
+
+            checkAchievements();
+            updateStatsDisplay(); 
+            renderAchievements(); 
+            saveData();
+        }
+        
+        function checkAchievements() {
+            let newAchievementUnlocked = false;
+            ACHIEVEMENTS.forEach(ach => {
+                if (!userStats.achievementsUnlocked.includes(ach.id)) {
+                    let conditionMet = false;
+                    if (ach.conditionType === 'event') {
+                        conditionMet = eventBasedAchievementState[ach.eventName] === true;
+                    } else {
+                        conditionMet = ach.condition();
+                    }
+
+                    if (conditionMet) {
+                        userStats.achievementsUnlocked.push(ach.id);
+                        showNotification(`Achievement Unlocked: ${ach.title}!`, ach.icon);
+                        createConfetti(); 
+                        newAchievementUnlocked = true;
+                    }
+                }
+            });
+            if (newAchievementUnlocked) {
+                updateStatsDisplay(); 
+                renderAchievements(); 
+                saveData(); 
+            }
+        }
+
+        function renderAchievements() {
+            const grid = document.getElementById('achievementsGrid');
+            grid.innerHTML = '';
+            ACHIEVEMENTS.forEach(ach => {
+                const isUnlocked = userStats.achievementsUnlocked.includes(ach.id);
+                let progressText = 'Locked';
+                if (isUnlocked) {
+                    progressText = 'UNLOCKED!';
+                } else if (ach.conditionType !== 'event') { 
+                    let targetMatchValue;
+                    let currentProgressValue;
+                    let digitArray; // Declare once
+
+                    if (ach.id.includes('hour')) {
+                        targetMatchValue = ach.id === 'first_hour' ? 1 : ( (digitArray = ach.id.match(/\d+/)) ? parseInt(digitArray[0]) : 0);
+                        currentProgressValue = userStats.totalHours;
+                        if (targetMatchValue) progressText = `${currentProgressValue.toFixed(1)} / ${targetMatchValue} hrs`;
+                    } else if (ach.id === 'skill_complete') {
+                        currentProgressValue = Object.values(skillsData).some(s => s.currentHours >= s.targetHours) ? 1 : 0;
+                        targetMatchValue = 1;
+                        progressText = `${currentProgressValue} / ${targetMatchValue} Skill`;
+                    } else if (ach.id.includes('skill')) { 
+                        targetMatchValue = ach.id === 'first_skill' ? 1 : (ach.id === 'multi_skill' ? 3 : 0);
+                        currentProgressValue = Object.keys(skillsData).length;
+                        if (targetMatchValue) progressText = `${currentProgressValue} / ${targetMatchValue} skills`;
+                    } else if (ach.id.includes('journal')) {
+                        targetMatchValue = ach.id === 'first_journal' ? 1 : ( (digitArray = ach.id.match(/\d+/)) ? parseInt(digitArray[0]) : 0);
+                        currentProgressValue = getTotalJournalEntries();
+                        if (targetMatchValue) progressText = `${currentProgressValue} / ${targetMatchValue} entries`;
+                    } else if (ach.id.includes('streak')) {
+                        digitArray = ach.id.match(/\d+/);
+                        targetMatchValue = digitArray ? parseInt(digitArray[0]) : 0;
+                        currentProgressValue = userStats.currentStreak;
+                        if (targetMatchValue) progressText = `${currentProgressValue} / ${targetMatchValue} days`;
+                    } else if (ach.id.includes('pomodoro')) {
+                        digitArray = ach.id.match(/\d+/);
+                        targetMatchValue = digitArray ? parseInt(digitArray[0]) : 0;
+                        currentProgressValue = userStats.pomodoroSessions;
+                        if (targetMatchValue) progressText = `${currentProgressValue} / ${targetMatchValue} sessions`;
+                    }
+                }
+
+
+                const card = document.createElement('div');
+                card.className = `achievement-card ${isUnlocked ? 'unlocked' : ''}`;
+                card.innerHTML = `
+                    <div class="achievement-icon">${ach.icon}</div>
+                    <div class="achievement-title">${ach.title}</div>
+                    <div class="achievement-description">${ach.description}</div>
+                    <div class="achievement-progress">${progressText}</div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function getTotalJournalEntries() {
+            return Object.values(skillsData).reduce((sum, skill) => sum + skill.journal.length, 0);
+        }
+
+        function updateStatsDisplay() {
+            document.getElementById('statsOverview').innerHTML = `
+                <div class="stat-card">
+                    <span class="stat-number">${userStats.totalHours.toFixed(1)}</span>
+                    <div class="stat-label">Total Hours</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number">${Object.keys(skillsData).length}</span>
+                    <div class="stat-label">Active Skills</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number">${userStats.achievementsUnlocked.length} / ${ACHIEVEMENTS.length}</span>
+                    <div class="stat-label">Achievements</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number">${userStats.currentStreak} <span style="font-size:1rem;">(Max: ${userStats.longestStreak})</span></span>
+                    <div class="stat-label">Day Streak</div>
+                </div>
+            `;
+        }
+
+        // --- UI UTILITIES (Notification, Confetti, Achievements Toggle) ---
+        function toggleAchievements() {
+            const grid = document.getElementById('achievementsGrid');
+            const icon = document.getElementById('achievementsToggleIcon');
+            grid.classList.toggle('collapsed');
+            icon.classList.toggle('collapsed');
+            if (grid.classList.contains('collapsed')) {
+                icon.textContent = '▶'; // Point right when collapsed
+            } else {
+                icon.textContent = '▼'; // Point down when expanded
+            }
+        }
+
+
+        function showNotification(text, icon = '🎉', isError = false) {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notificationText');
+            const notificationIcon = notification.querySelector('.notification-icon');
+            
+            notificationIcon.textContent = icon;
+            notificationText.textContent = text;
+
+            if (isError) {
+                notification.style.background = 'linear-gradient(135deg, var(--accent-secondary), #ff8a8a)';
+            } else {
+                notification.style.background = 'linear-gradient(135deg, var(--accent), #00ccff)';
+            }
+            
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 4000);
+        }
+
+        function createConfetti(count = 50, colors = ['#00ff88', '#00ccff', '#ff6b6b', '#ffd93d', '#6bcf7f']) {
+            const celebrationContainer = document.getElementById('milestoneCelebration');
+            celebrationContainer.innerHTML = ''; 
+
+            for (let i = 0; i < count; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti'; 
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.setProperty('--random-x', (Math.random() - 0.5) * 2); 
+                confetti.style.animationDelay = Math.random() * 0.5 + 's'; 
+                confetti.style.animationDuration = (Math.random() * 2 + 2) + 's'; 
+                celebrationContainer.appendChild(confetti);
+
+                setTimeout(() => confetti.remove(), 5000); 
+            }
+        }
+        
+        // --- IMPORT/EXPORT ---
+        function exportData() {
+            const dataStr = JSON.stringify({ skillsData, userStats, eventBasedAchievementState }, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = `skill_tracker_backup_${new Date().toISOString().slice(0,10)}.json`;
+            
+            let linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            showNotification("Data exported!", "📤");
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (imported.skillsData && imported.userStats) {
+                        skillsData = imported.skillsData;
+                        userStats = imported.userStats;
+                        eventBasedAchievementState = imported.eventBasedAchievementState || { logTimeEarly: false, logTimeLate: false, logMarathonSession: false };
+                        
+                        Object.values(skillsData).forEach(skill => {
+                            if(skill.timerState) {
+                                skill.timerState.intervalId = null;
+                                skill.timerState.running = false;
+                            } else {
+                                skill.timerState = { startTime: null, elapsedMs: 0, intervalId: null, running: false };
+                            }
+                        });
+                        if (pomodoroInterval) clearInterval(pomodoroInterval);
+                        pomodoroRunning = false;
+
+                        saveData(); 
+                        renderAll(); 
+                        showNotification("Data imported successfully!", "📥");
+                    } else {
+                        showNotification("Invalid import file format.", "⚠️", true);
+                    }
+                } catch (error) {
+                    showNotification("Error importing data. File might be corrupted.", "⚠️", true);
+                    console.error("Import error:", error);
+                } finally {
+                     event.target.value = null; 
+                }
+            };
+            reader.readAsText(file);
+        }
+
+    </script>
+</body>
+</html>
